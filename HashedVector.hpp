@@ -11,6 +11,7 @@ private:
 	//a pointer wrapper to check for deletions
 	struct _HashObject {
 		bool deleted = false;
+		bool culled = false;
 		T* t;
 	};
 	//a map to link IDs to t pointers
@@ -47,9 +48,12 @@ private:
 		T* elementToRemove = hashMap[id].t;
 		auto matchElement = [elementToRemove](const T& e) {
 			return &e == elementToRemove;};
-		tVector.erase(std::remove_if(tVector.begin(), tVector.end(), matchElement), tVector.end());
+		auto eraseIt = std::find_if(tVector.begin(), tVector.end(), matchElement);
+		if (eraseIt != tVector.end()) {
+			tVector.erase(eraseIt);
+		}
+		hashMap[id].culled = true;
 	}
-
 public:
 	//adds the item to the vector and returns its key ID
 	int push_back(T t)
@@ -99,10 +103,9 @@ public:
 		if (!cullNeeded)
 			return;
 
-		auto previous_it = hashMap.begin();
 		// Iterate through the hash map and remove elements with element.deleted = true
 		for (auto it = hashMap.begin(); it != hashMap.end(); it++) {
-			if (it->second.deleted)
+			if (it->second.deleted && !it->second.culled)
 				RemoveElementFromVector(it->first);
 		}
 
