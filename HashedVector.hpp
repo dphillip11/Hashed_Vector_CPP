@@ -67,7 +67,7 @@ public:
 		//Add object to hashMap;
 		hashMap[ID] = h;
 		//rehash if vector capacity changed
-		if(tVector.capacity() != capacity_before)
+		if (tVector.capacity() != capacity_before)
 			Rehash();
 		return ID;
 	}
@@ -76,17 +76,17 @@ public:
 	void remove(int id, bool cullVector = true)
 	{
 		//check if ID is valid
-		if (hashMap.find(id) == hashMap.end()) 
+		if (hashMap.find(id) == hashMap.end())
 			throw std::out_of_range("Invalid index assertion error: Index out of range.");
 		//check if ID is deleted
-		if (!hashMap[id].deleted)
-		    return;
+		if (hashMap[id].deleted)
+			return;
 		//check if pointer is valid
 		if (hashMap[id].t == nullptr)
 			return;
-    	// Mark object as deleted
-    	hashMap[id].deleted = true;
-    	
+		// Mark object as deleted
+		hashMap[id].deleted = true;
+
 		cullNeeded = true;
 		if (cullVector)
 			CullDeleted();
@@ -99,13 +99,12 @@ public:
 		if (!cullNeeded)
 			return;
 
-		 // Iterate through the hash map and remove elements with element.deleted = true
-    	for (auto it = hashMap.begin(); it != hashMap.end(); ++it) {
-        	if (it->second.deleted) {
-            RemoveElementFromVector(it->first);
-            hashMap.erase(it);
-        	}	
-    	}
+		auto previous_it = hashMap.begin();
+		// Iterate through the hash map and remove elements with element.deleted = true
+		for (auto it = hashMap.begin(); it != hashMap.end(); it++) {
+			if (it->second.deleted)
+				RemoveElementFromVector(it->first);
+		}
 
 		// Reset cullNeeded flag
 		cullNeeded = false;
@@ -113,15 +112,15 @@ public:
 		Rehash();
 	}
 
-	
+
 	//returns the item at the given index, will throw error if invalid
 	T& operator [](int id)
 	{
 		auto it = hashMap.find(id);
-		if (it == hashMap.end()) 
+		if (it == hashMap.end())
 			throw std::out_of_range("Invalid index assertion error: Index out of range.");
 		if (hashMap[id].deleted)
-				throw std::out_of_range("Invalid index assertion error: element deleted.");
+			throw std::out_of_range("Invalid index assertion error: element deleted.");
 		return *hashMap[id].t;
 
 	}
@@ -130,7 +129,7 @@ public:
 	T* try_get(int id)
 	{
 		auto it = hashMap.find(id);
-		if (it == hashMap.end()) 
+		if (it == hashMap.end())
 			return nullptr;
 		if (hashMap[id].deleted)
 			return nullptr;
@@ -168,5 +167,5 @@ public:
 	}
 
 
-	
+
 };
