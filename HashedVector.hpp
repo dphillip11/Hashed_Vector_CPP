@@ -142,6 +142,7 @@ public:
 	void reserve(int size)
 	{
 		tVector.reserve(size);
+		Rehash();
 	}
 
 	auto size() const noexcept

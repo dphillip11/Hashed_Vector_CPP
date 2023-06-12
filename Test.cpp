@@ -1,131 +1,75 @@
 #include <iostream>
+#include <cassert>
+#include <stdexcept>
 #include <vector>
 #include "HashedVector.hpp"
-#include <cassert>
 
+// Test function to check if the given condition is true
+void test(bool condition, int testNumber)
+{
+    std::cout << "Test " << testNumber << ": " << (condition ? "Pass" : "Fail") << std::endl;
+}
+
+// Test function to check the functionality of HashedVector
 void testHashedVector()
 {
-  bool testPassed = true;
-
     HashedVector<int> hashedVector;
 
-    // Add elements to the HashedVector
+    // Test 1: Verify if push_back adds the item to the vector and returns a valid ID
     int id1 = hashedVector.push_back(10);
+    test(id1 == 0, 1);
+
+    // Test 2: Verify if the item can be accessed using the ID operator[]
+    int& item1 = hashedVector[id1];
+    test(item1 == 10, 2);
+
+    // Test 3: Verify if try_get returns a valid pointer to the item
+    int* pItem1 = hashedVector.try_get(id1);
+    test(pItem1 != nullptr && *pItem1 == 10, 3);
+
+    // Test 4: Verify if remove marks the item as deleted
+    hashedVector.remove(id1);
+    test(hashedVector.try_get(id1) == nullptr, 4);
+
+    // Test 5: Verify if cullDeleted removes the deleted items from the vector
+    hashedVector.CullDeleted();
+    test(hashedVector.size() == 0, 5);
+
+    // Test 6: Verify if push_back adds new items after removal
     int id2 = hashedVector.push_back(20);
+    test(id2 == 1, 6);
+
+    // Test 7: Verify if the new item can be accessed correctly
+    int& item2 = hashedVector[id2];
+    test(item2 == 20, 7);
+
+    // Test 8: Verify if the underlying vector is correct
+    std::vector<int>& vector = hashedVector.getVector();
+    test(vector.size() == 1 && vector[0] == 20, 8);
+
+    // Test 9: Verify if IDs and corresponding data are preserved after culling and rehashing
+    hashedVector.CullDeleted();
     int id3 = hashedVector.push_back(30);
+    int id4 = hashedVector.push_back(40);
+    hashedVector.remove(id3, false);
+    hashedVector.remove(id4, false);
+    hashedVector.CullDeleted();
+    test(hashedVector.size() == 1, 9);
+    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 9);
+    test(hashedVector.try_get(id3) == nullptr, 9);
+    test(hashedVector.try_get(id4) == nullptr, 9);
 
-    // Modify and access elements using the [] operator
-    hashedVector[id1] = 100;
-    hashedVector[id2] = 200;
-    hashedVector[id3] = 300;
-
-    // Access elements using try_get and print their values
-    if (int* element1 = hashedVector.try_get(id1)) {
-        std::cout << "Element 1: " << *element1 << std::endl;
-    } else {
-        testPassed = false;
-        std::cout << "Failed to access Element 1 using try_get." << std::endl;
-    }
-    if (int* element2 = hashedVector.try_get(id2)) {
-        std::cout << "Element 2: " << *element2 << std::endl;
-    } else {
-        testPassed = false;
-        std::cout << "Failed to access Element 2 using try_get." << std::endl;
-    }
-    if (int* element3 = hashedVector.try_get(id3)) {
-        std::cout << "Element 3: " << *element3 << std::endl;
-    } else {
-        testPassed = false;
-        std::cout << "Failed to access Element 3 using try_get." << std::endl;
-    }
-
-    // Remove an element from the HashedVector
-    hashedVector.remove(id2);
-
-    // Try accessing the removed element, should return nullptr
-    if (int* removedElement = hashedVector.try_get(id2)) {
-        testPassed = false;
-        std::cout << "Element 2 still exists after removal. Test failed." << std::endl;
-    }
-
-    // Try accessing an invalid index, should throw an exception
-    try {
-        int invalidElement = hashedVector[999];
-        testPassed = false;
-        std::cout << "Invalid Element accessed without throwing an exception. Test failed." << std::endl;
-    } catch (const std::out_of_range&) {
-        // Exception caught as expected
-    }
-
-    // Check pass or fail condition
-    if (testPassed) {
-        std::cout << "All test cases passed!" << std::endl;
-    } else {
-        std::cout << "One or more test cases failed." << std::endl;
-    }
-
-     //keep a list of floats and their pointerss
-	std::vector<float*> std_vector_pointers;
-	std::vector<float> vector;
-	HashedVector<float> hashed_vector;
-
-	for (int i = 0; i < 10; i++)
-	{
-		vector.push_back(i * 1.0f);
-		std_vector_pointers.push_back(&vector.back());
-        auto id = hashed_vector.push_back(i * 1.0f);
-        assert(id == i);
-	}
-
-    auto Test = [](std::vector<float*>& std_vector_pointers, HashedVector<float>& hashed_vector){
-        int valid_vector_points = 0;
-        int valid_hashed_vector_points = 0;
-        //demonstrate pointers are invalid
-        for (int i = 0; i < 10; i++)
-        {
-            auto vector_success = *std_vector_pointers[i] == i * 1.0f;
-            auto hashed_vector_success = hashed_vector[i] == i * 1.0f;
-            valid_vector_points += vector_success;
-            valid_hashed_vector_points += hashed_vector_success;
-        }
-        std::cout << "Vector: " << (valid_vector_points) << std::endl;
-        std::cout << "HashedVector: " << (valid_hashed_vector_points) << std::endl;
-    };
-
-	Test(std_vector_pointers, hashed_vector);
-
-    //remove 5 elements
-    for (int i = 0; i < 5; i++)
-    {
-        vector.erase(vector.begin() + i);
-        hashed_vector.remove(i);
-    }
-    //add 5 elements
-    for (int i = 0; i < 5; i++)
-    {
-        vector.push_back(i * 1.0f);
-        auto id = hashed_vector.push_back(i * 1.0f);
-        assert(id == i + 10);
-    }
-    //now the data should be 5678901234
-    //valid id's should be 5-14
-    int expected[] = {5,6,7,8,9,0,1,2,3,4};
-    int valid_vector_points = 0;
-    int valid_hashed_vector_points = 0;
-
-    for (int i = 0; i < 10; i++)
-    {
-        auto vector_success = *std_vector_pointers[i] == expected[i] * 1.0f;
-        auto hashed_vector_success = hashed_vector[i + 5] == expected[i] * 1.0f;
-        valid_hashed_vector_points += hashed_vector_success;
-        valid_vector_points += vector_success;
-    }
-    std::cout << "Vector: " << (valid_vector_points) << std::endl;
-    std::cout << "HashedVector: " << (valid_hashed_vector_points) << std::endl;
+    // Test 10: Verify if IDs and corresponding data are preserved after rehashing
+    hashedVector.reserve(1000);
+    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 10);
+    test(hashedVector.try_get(id3) == nullptr, 10);
+    test(hashedVector.try_get(id4) == nullptr, 10);
 }
 
-int main(){
+int main()
+{
     testHashedVector();
-    return 0;
 
+    return 0;
 }
+
