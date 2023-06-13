@@ -26,17 +26,12 @@ auto vector& = hv.getVector();
 
 ## Summary
 
--Allows for an underlying vector of data with an ID lookup feature.
-
--This overcomes pointer invalidation and allows deletion from a vector while maintaining lookups.
-  
--ID's remain constant.
-  
--Indexing a Hashed_Vector is an ID lookup, it will return an error for invalid or deleted ID's.
-  
--Use try_get(ID) to check for existing entry.
-  
--You can still access the underlying vector but manipulating it directly should be avoided.
+*Allows for an underlying vector of data with an ID lookup feature.
+*This overcomes pointer invalidation and allows deletion from a vector while maintaining lookups.
+*ID's remain constant.
+*Indexing a Hashed_Vector is an ID lookup, it will return an error for invalid or deleted ID's. 
+*Use try_get(ID) to check for existing entry.  
+*You can still access the underlying vector but manipulating it directly should be avoided.
   
 
   
