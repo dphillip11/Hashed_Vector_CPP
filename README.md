@@ -12,3 +12,33 @@ Unnecessary reallocation can be avoided using the reserve() function as in a vec
 
 For my use case I will probably allow entities to store ID's for attached components that can be queried via a template function attached to the entity.
 
+## Usage
+
+~~~~
+#include "HashedVector.hpp"
+
+HashedVector<float> hv;
+  
+int ID = hv.push_back(3.0);
+  
+hv.remove(ID);
+  
+auto vector& = hv.getVector();
+~~~~
+## Summary
+
+* Allows for an underlying vector of data with an ID lookup feature.
+* This overcomes pointer invalidation and allows deletion from a vector while maintaining lookups.
+* ID's remain constant.
+* Indexing a Hashed_Vector is an ID lookup, it will return an error for invalid or deleted ID's. 
+* Use try_get(ID) to check for existing entry.  
+* You can still access the underlying vector but manipulating it directly should be avoided.
+  
+
+  
+
+  
+
+  
+
+
