@@ -23,7 +23,7 @@ int ID = hv.push_back(3.0);
   
 hv.remove(ID);
   
-auto vector& = hv.getVector();
+const auto& vector = hv.getVector();
 ~~~~
 ## Summary
 
