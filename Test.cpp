@@ -24,7 +24,7 @@ void testHashedVector()
     test(item1 == 10, 2);
 
     // Test 3: Verify if try_get returns a valid pointer to the item
-    int* pItem1 = hashedVector.try_get(id1);
+    auto pItem1 = hashedVector.try_get(id1);
     test(pItem1 != nullptr && *pItem1 == 10, 3);
 
     // Test 4: Verify if remove marks the item as deleted
@@ -55,13 +55,16 @@ void testHashedVector()
     hashedVector.remove(id4, false);
     hashedVector.CullDeleted();
     test(hashedVector.size() == 1, 9);
-    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 9);
+
+    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 9);/////////////issue here
+    std::cout << *hashedVector.try_get(id2);
+
     test(hashedVector.try_get(id3) == nullptr, 9);
     test(hashedVector.try_get(id4) == nullptr, 9);
 
     // Test 10: Verify if IDs and corresponding data are preserved after rehashing
     hashedVector.reserve(1000);
-    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 10);
+    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 10);/////////////issue here
     test(hashedVector.try_get(id3) == nullptr, 10);
     test(hashedVector.try_get(id4) == nullptr, 10);
 
@@ -73,9 +76,9 @@ void testHashedVector()
     //constVector.push_back(30);  // This should result in a compilation error
 
     // Ensure the underlying vector is still unmodified
-    test(hashedVector.size() == 1 && hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 11);
+    test(hashedVector.size() == 1 && hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 11);/////////////issue here
 
-    // Test 12: Try using emplace_back with parameters
+    //Test 12: Try using emplace_back with parameters
     struct TestStruct
     {
         int a;
@@ -90,6 +93,8 @@ void testHashedVector()
 
     
 }
+
+#include "Registry.hpp"
 
 int main()
 {

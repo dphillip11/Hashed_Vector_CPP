@@ -6,168 +6,118 @@
 #include <vector>
 #include <algorithm>
 
-//a data structure that maintains a contiguous array of objects and a map of pointers to them
 template <typename T>
 class HashedVector {
-
 private:
-	//a pointer wrapper to check for deletions
 	struct _HashObject {
 		bool deleted = false;
-		bool culled = false;
-		T* t;
+		int vector_index = -1;
 	};
-	//a map to link IDs to t pointers
+
 	std::unordered_map<int, _HashObject> hashMap;
-	//the contiguous vector of underlying ts
 	std::vector<T> tVector;
-	//id counter
 	int next_ID = 0;
-	// bool to check if a cull is needed before rehash
 	bool cullNeeded = false;
-	//fix hash object pointers when vector reallocates
+
 	void Rehash()
 	{
 		if (cullNeeded)
 			CullDeleted();
-		int check_ID = 0;
-		for (int i = 0; i < tVector.size(); i++)
+		int index = 0;
+		for (auto it = hashMap.begin(); it != hashMap.end(); ++it)
 		{
-			//ignored deleted ID's
-			while (hashMap[check_ID].deleted)
+			if (it->second.deleted)
 			{
-				check_ID++;
+				continue;
 			}
-			//assign current address to has object
-			hashMap[check_ID].t = &tVector[i];
-			//increment ID
-			check_ID++;
+			it->second.vector_index = index;
+			index++;
 		}
 	}
 
-	//internal function to remove a single element from the vector, not error checked
-	void RemoveElementFromVector(int id)
-	{
-		T* elementToRemove = hashMap[id].t;
-		auto matchElement = [elementToRemove](const T& e) {
-			return &e == elementToRemove;};
-		auto eraseIt = std::find_if(tVector.begin(), tVector.end(), matchElement);
-		if (eraseIt != tVector.end()) {
-			tVector.erase(eraseIt);
-		}
-		hashMap[id].culled = true;
-	}
 public:
-	//adds the item to the vector and returns its key ID
-	int push_back(T t)
+	//pass constructor arguments
+	template <typename... Args>
+	int emplace_back(Args&&... args)
 	{
-		//check vector capacity
 		int capacity_before = tVector.capacity();
-		//set ID
 		int ID = next_ID;
-		//increment next ID
 		next_ID++;
-		//Add it to the vector
-		tVector.push_back(t);
-		_HashObject h;
-		h.t = &tVector.back();
-		//Add object to hashMap;
-		hashMap[ID] = h;
-		//rehash if vector capacity changed
+		tVector.emplace_back(std::forward<Args>(args)...);
+		hashMap[ID].vector_index = tVector.size() - 1;
 		if (tVector.capacity() != capacity_before)
 			Rehash();
 		return ID;
 	}
 
-	  // emplaces the item in the vector and returns its key ID
-    template<typename... Args>
-    int emplace_back(Args&&... args)
-    {
-        // check vector capacity
-        int capacity_before = tVector.capacity();
-        // set ID
-        int ID = next_ID;
-        // increment next ID
-        next_ID++;
-        // emplace the item in the vector
-        tVector.emplace_back(std::forward<Args>(args)...);
-        _HashObject h;
-        h.t = &tVector.back();
-        // add object to hashMap
-        hashMap[ID] = h;
-        // rehash if vector capacity changed
-        if (tVector.capacity() != capacity_before)
-            Rehash();
-        return ID;
-    }
-
-	//removes the item from the vector, cull wil be performed on rehash if set to false
-	void remove(int id, bool cullVector = true)
+	int push_back(const T& t)
 	{
-		//check if ID is valid
-		if (hashMap.find(id) == hashMap.end())
-			throw std::out_of_range("Invalid index assertion error: Index out of range.");
-		//check if ID is deleted
-		if (hashMap[id].deleted)
-			return;
-		//check if pointer is valid
-		if (hashMap[id].t == nullptr)
-			return;
-		// Mark object as deleted
-		hashMap[id].deleted = true;
-
-		cullNeeded = true;
-		if (cullVector)
-			CullDeleted();
+		int capacity_before = tVector.capacity();
+		int ID = next_ID;
+		next_ID++;
+		tVector.push_back(t);
+		hashMap[ID].vector_index = tVector.size() - 1;
+		if (tVector.capacity() != capacity_before)
+			Rehash();
+		return ID;
 	}
 
-	//cull deleted elements from the vector to maintain contiguousness
+	void remove(const int& id, const bool& cullVector = true)
+	{
+		auto it = hashMap.find(id);
+		if (it != hashMap.end())
+		{
+			it->second.deleted = true;
+			cullNeeded = true;
+			if (cullVector)
+				CullDeleted();
+		}
+	}
+
 	void CullDeleted()
 	{
-		//check if cull is needed
 		if (!cullNeeded)
 			return;
 
-		// Iterate through the hash map and remove elements with element.deleted = true
-		for (auto it = hashMap.begin(); it != hashMap.end(); it++) {
-			if (it->second.deleted && !it->second.culled)
-				RemoveElementFromVector(it->first);
+		int elementsRemoved = 0;
+		for (auto it = hashMap.begin(); it != hashMap.end();)
+		{
+			if (it->second.deleted)
+			{
+				tVector.erase(tVector.begin() + (it->second.vector_index - elementsRemoved));
+				it = hashMap.erase(it);
+				++elementsRemoved;
+			}
+			else
+			{
+				++it;
+			}
 		}
-
-		// Reset cullNeeded flag
 		cullNeeded = false;
-		//rehash
 		Rehash();
 	}
 
 
-	//returns the item at the given index, will throw error if invalid
-	T& operator [](int id)
+	T& operator[](const int& id)
 	{
 		auto it = hashMap.find(id);
-		if (it == hashMap.end())
-			throw std::out_of_range("Invalid index assertion error: Index out of range.");
-		if (hashMap[id].deleted)
-			throw std::out_of_range("Invalid index assertion error: element deleted.");
-		return *hashMap[id].t;
-
+		if (it != hashMap.end())
+		{
+			if (!it->second.deleted)
+				return tVector[it->second.vector_index];
+		}
+		throw std::out_of_range("Invalid index assertion error: Index out of range.");
 	}
 
-	//returns the item at the given index, will return nullptr if invalid
-	T* try_get(int id)
+	T* try_get(const int& id)
 	{
 		auto it = hashMap.find(id);
-		if (it == hashMap.end())
-			return nullptr;
-		if (hashMap[id].deleted)
-			return nullptr;
-		return hashMap[id].t;
-	}
-
-	void reserve(int size)
-	{
-		tVector.reserve(size);
-		Rehash();
+		if (it != hashMap.end())
+		{
+			if (!it->second.deleted)
+				return &(tVector[it->second.vector_index]);
+		}
+		return nullptr;
 	}
 
 	auto size() const noexcept
@@ -187,14 +137,16 @@ public:
 		next_ID = 0;
 	}
 
-	//returns a const reference to the underlying vector, use a reference to avoid copying
-	const std::vector<T>& getVector()
+	void reserve(const int& size)
 	{
-		if (cullNeeded)
-			CullDeleted();
-		return tVector;
+		tVector.reserve(size);
+		Rehash();
 	}
 
+	const std::vector<T>& getVector() const
+	{
+		return tVector;
+	}
 };
 
-#endif // !HASHEDVECTOR_HPP
+#endif // HASHEDVECTOR_HPP
