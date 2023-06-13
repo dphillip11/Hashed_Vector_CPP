@@ -165,15 +165,13 @@ public:
 		next_ID = 0;
 	}
 
-	//returns a reference to the underlying vector
-	std::vector<T>& getVector()
+	//returns a const reference to the underlying vector, use a reference to avoid copying
+	const std::vector<T>& getVector()
 	{
 		if (cullNeeded)
 			CullDeleted();
 		return tVector;
 	}
-
-
 
 };
 

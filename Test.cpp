@@ -44,7 +44,7 @@ void testHashedVector()
     test(item2 == 20, 7);
 
     // Test 8: Verify if the underlying vector is correct
-    std::vector<int>& vector = hashedVector.getVector();
+    const std::vector<int>& vector = hashedVector.getVector();
     test(vector.size() == 1 && vector[0] == 20, 8);
 
     // Test 9: Verify if IDs and corresponding data are preserved after culling and rehashing
@@ -64,12 +64,21 @@ void testHashedVector()
     test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 10);
     test(hashedVector.try_get(id3) == nullptr, 10);
     test(hashedVector.try_get(id4) == nullptr, 10);
+
+    // Test 11: Verify constness of vector reference
+    const std::vector<int>& constVector = hashedVector.getVector();
+    test(constVector.size() == hashedVector.size(), 11);
+
+    // Attempt to modify the underlying vector
+    //constVector.push_back(30);  // This should result in a compilation error
+
+    // Ensure the underlying vector is still unmodified
+    test(hashedVector.size() == 1 && hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 11);
 }
 
 int main()
 {
     testHashedVector();
-
     return 0;
 }
 
