@@ -14,6 +14,7 @@ For my use case I will probably allow entities to store ID's for attached compon
 
 ## Usage
 
+~~~~
 #include "HashedVector.hpp"
 
 HashedVector<float> hv;
@@ -23,7 +24,7 @@ int ID = hv.push_back(3.0);
 hv.remove(ID);
   
 auto vector& = hv.getVector();
-
+~~~~
 ## Summary
 
 * Allows for an underlying vector of data with an ID lookup feature.
