@@ -79,6 +79,28 @@ public:
 		return ID;
 	}
 
+	  // emplaces the item in the vector and returns its key ID
+    template<typename... Args>
+    int emplace_back(Args&&... args)
+    {
+        // check vector capacity
+        int capacity_before = tVector.capacity();
+        // set ID
+        int ID = next_ID;
+        // increment next ID
+        next_ID++;
+        // emplace the item in the vector
+        tVector.emplace_back(std::forward<Args>(args)...);
+        _HashObject h;
+        h.t = &tVector.back();
+        // add object to hashMap
+        hashMap[ID] = h;
+        // rehash if vector capacity changed
+        if (tVector.capacity() != capacity_before)
+            Rehash();
+        return ID;
+    }
+
 	//removes the item from the vector, cull wil be performed on rehash if set to false
 	void remove(int id, bool cullVector = true)
 	{

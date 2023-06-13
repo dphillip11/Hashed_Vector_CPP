@@ -74,6 +74,21 @@ void testHashedVector()
 
     // Ensure the underlying vector is still unmodified
     test(hashedVector.size() == 1 && hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 11);
+
+    // Test 12: Try using emplace_back with parameters
+    struct TestStruct
+    {
+        int a;
+        float b;
+        TestStruct(int a, float b) : a(a), b(b) {}
+    };
+    HashedVector<TestStruct> hashedVector2;
+    int id5 = hashedVector2.emplace_back(10, 20.0f);
+    test(id5 == 0, 12);
+    TestStruct& item5 = hashedVector2[id5];
+    test(item5.a == 10 && item5.b == 20.0f, 12);
+
+    
 }
 
 int main()
