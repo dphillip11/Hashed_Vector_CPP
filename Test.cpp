@@ -5,94 +5,94 @@
 #include "HashedVector.hpp"
 
 // Test function to check if the given condition is true
-void test(bool condition, int testNumber)
+void test(bool condition)
 {
+    static int testNumber = 1;
     std::cout << "Test " << testNumber << ": " << (condition ? "Pass" : "Fail") << std::endl;
+    testNumber++;
 }
 
 // Test function to check the functionality of HashedVector
 void testHashedVector()
 {
-    HashedVector<int> hashedVector;
+    hashedVector<char> hv;
+    //test adding elements
+    test(hv.push_back('A') == 0); // test 1
+    test(hv.push_back('B') == 1); //test2
+    test(hv.push_back('C') == 2); //test3
+    test(hv.size() == 3); //test4
+    //test retrieval
+    test(hv[0] == 'A'); //test5
+    test(hv[1] == 'B'); //test6
+    test(hv[2] == 'C'); //test7
+    //test removing elements
+    hv.remove(1);
+    test(hv.size() == 2); // test8
+    // test accuracy of elements
+    test(hv[0] == 'A'); //test9
+    test(hv[2] == 'C'); //test10
+    //test emplacement
+    auto id = hv.emplace_back('D');
+    test(hv.size() == 3); //test11
+    test(hv[id] == 'D'); //test12
 
-    // Test 1: Verify if push_back adds the item to the vector and returns a valid ID
-    int id1 = hashedVector.push_back(10);
-    test(id1 == 0, 1);
-
-    // Test 2: Verify if the item can be accessed using the ID operator[]
-    int& item1 = hashedVector[id1];
-    test(item1 == 10, 2);
-
-    // Test 3: Verify if try_get returns a valid pointer to the item
-    auto pItem1 = hashedVector.try_get(id1);
-    test(pItem1 != nullptr && *pItem1 == 10, 3);
-
-    // Test 4: Verify if remove marks the item as deleted
-    hashedVector.remove(id1);
-    test(hashedVector.try_get(id1) == nullptr, 4);
-
-    // Test 5: Verify if cullDeleted removes the deleted items from the vector
-    hashedVector.CullDeleted();
-    test(hashedVector.size() == 0, 5);
-
-    // Test 6: Verify if push_back adds new items after removal
-    int id2 = hashedVector.push_back(20);
-    test(id2 == 0, 6);
-
-    // Test 7: Verify if the new item can be accessed correctly
-    int& item2 = hashedVector[id2];
-    test(item2 == 20, 7);
-
-    // Test 8: Verify if the underlying vector is correct
-    const std::vector<int>& vector = hashedVector.getVector();
-    test(vector.size() == 1 && vector[0] == 20, 8);
-
-    // Test 9: Verify if IDs and corresponding data are preserved after culling and rehashing
-    hashedVector.CullDeleted();
-    int id3 = hashedVector.push_back(30);
-    int id4 = hashedVector.push_back(40);
-    hashedVector.remove(id3);
-    hashedVector.remove(id4);
-    test(hashedVector.size() == 1, 9);
-
-    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 9);/////////////issue here
-    std::cout << *hashedVector.try_get(id2);
-
-    test(hashedVector.try_get(id3) == nullptr, 9);
-    test(hashedVector.try_get(id4) == nullptr, 9);
-
-    // Test 10: Verify if IDs and corresponding data are preserved after rehashing
-    hashedVector.reserve(1000);
-    test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 10);/////////////issue here
-    std::cout << *hashedVector.try_get(id2);
-    test(hashedVector.try_get(id3) == nullptr, 10);
-    test(hashedVector.try_get(id4) == nullptr, 10);
-
-    // Test 11: Verify constness of vector reference
-    const std::vector<int>& constVector = hashedVector.getVector();
-    test(constVector.size() == hashedVector.size(), 11);
-
-    // Attempt to modify the underlying vector
-    //constVector.push_back(30);  // This should result in a compilation error
-
-    // Ensure the underlying vector is still unmodified
-    test(hashedVector.size() == 1 && hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 11);/////////////issue here
-    std::cout << *hashedVector.try_get(id2);
-
-    //Test 12: Try using emplace_back with parameters
-    struct TestStruct
+    struct testStruct
     {
         int a;
         float b;
-        TestStruct(int a, float b) : a(a), b(b) {}
+        testStruct(int a, float b) : a(a), b(b) {}
     };
-    HashedVector<TestStruct> hashedVector2;
-    int id5 = hashedVector2.emplace_back(10, 20.0f);
-    test(id5 == 0, 12);
-    TestStruct& item5 = hashedVector2[id5];
-    test(item5.a == 10 && item5.b == 20.0f, 12);
+    hashedVector<testStruct> hv2;
+    auto id2 = hv2.emplace_back(1, 2.0f);
+    test(hv2[id2].a == 1); //test13
+    test(hv2[id2].b == 2.0f); //test14
+    test(hv2.size() == 1); //test15
+    hv2.remove(id2);
+    test(hv2.size() == 0); //test16
+    //test removing all elements
+    hv2.clear();
+    //check ID's are not reused
+    test(hv2.emplace_back(0, 1.0f) == 1);//test17
+    test(hv2.emplace_back(0, 1.0f) == 2); //test18
 
-    
+    //test lookup accuracy over a large number of element
+    hashedVector<int> hv3;
+    for(int i = 0; i < 10000; i++)
+    {
+        hv3.emplace_back(i);
+    }
+    bool success = true;
+    for(int i = 0; i < 10000; i++)
+    {
+        //check random access
+        int index = rand() % 10000;
+        if(hv3[index] != index)
+        {
+            success = false;
+            break;
+        }
+    }
+    test(success); //test19
+    //remove elements
+    for (int i = 0; i < 1000; i++)
+    {
+        int index = i *  5;
+        hv3.remove(index);
+    }
+    std::cout << "Size: " << hv3.size() << std::endl;
+    for(int i = 0; i < 10000; i++)
+    {
+        //check random access
+        int index = rand() % 10000;
+        if(hv3[index] != index)
+        {
+            std::cout<< "Index: " << index << std::endl;
+            std::cout << "Value: " << hv3[index] << std::endl;
+            success = false;
+            break;
+        }
+    }
+    test(success); //test20
 }
 
 #include "Registry.hpp"
