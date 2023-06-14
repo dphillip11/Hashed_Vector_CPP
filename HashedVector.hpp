@@ -6,17 +6,10 @@
 template <typename dataType>
 class hashedVector{
 private:
-	// nodes contain data about available keys
-	struct node
-	{
-		int value;
-		bool deleted = false;
-	};
-
 	// this is where user data is stored
 	std::vector<dataType> wrapped_vector;
 	// this maps keys to vector positions
-	std::unordered_map<int, node> hash_map;
+	std::unordered_map<int, int> hash_map;
 	// keeps key state
 	int next_key = 0;
 
@@ -27,28 +20,25 @@ private:
 		{
 			if (pair.first > key)
 			{
-				pair.second.value--;
+				pair.second--;
 			}
 		}
 	}
 
-	void add_node()
+	void addPair()
 	{
-		//add new node to hash map
-		node new_node;
-		//keep index of latest element in vector
-		new_node.value = wrapped_vector.size() - 1;
-		//add new node to hash map
-		hash_map[next_key] = new_node;
+		//add new pair to hash map
+		hash_map[next_key] = wrapped_vector.size() - 1;
 		next_key++;
 	}
 
 public:
+	//pushes data to vector and returns key
 	int push_back(const dataType& new_data)
 	{
 		wrapped_vector.push_back(new_data);
 		//add node to hash map
-		add_node();
+		addPair();
 		return next_key-1;
 	}
 
@@ -57,8 +47,8 @@ public:
 	int emplace_back(Args&&... args)
 	{
 		wrapped_vector.emplace_back(std::forward<Args>(args)...);
-		//add node to hash map
-		add_node();
+		//add pair to hash map
+		addPair();
 		return next_key - 1;
 	}
 
@@ -70,7 +60,7 @@ public:
 			throw std::invalid_argument("Key is not valid");
 		}
 		//remove data from vector
-		wrapped_vector.erase(wrapped_vector.begin() + hash_map[key].value);
+		wrapped_vector.erase(wrapped_vector.begin() + hash_map[key]);
 		//remove from hash map
 		hash_map.erase(key);
 		offsetAllValuesAfterKey(key);
@@ -81,7 +71,7 @@ public:
 		return wrapped_vector;
 	}
 
-	auto getHashMap()
+	auto& getHashMap()
 	{
 		return hash_map;
 	}
@@ -103,12 +93,23 @@ public:
 		{
 			throw std::invalid_argument("Key is not valid");
 		}
-		return wrapped_vector[hash_map[key].value];
+		return wrapped_vector[hash_map[key]];
 	}
 
+	//check key value pair exists
 	bool is_valid_key(const int& key)
 	{
-		return hash_map.find(key) != hash_map.end() && !hash_map[key].deleted;
+		return hash_map.find(key) != hash_map.end();
+	}
+
+	//returns pointer to data if key is valid, otherwise returns nullptr
+	dataType* try_get(int key)
+	{
+		if (!is_valid_key(key))
+		{
+			return nullptr;
+		}
+		return &wrapped_vector[hash_map[key]];
 	}
 
 	//empties the data structure, ID's do not reset as this could allow false lookup for old keys
