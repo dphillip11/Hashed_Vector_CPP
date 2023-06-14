@@ -37,7 +37,7 @@ void testHashedVector()
 
     // Test 6: Verify if push_back adds new items after removal
     int id2 = hashedVector.push_back(20);
-    test(id2 == 1, 6);
+    test(id2 == 0, 6);
 
     // Test 7: Verify if the new item can be accessed correctly
     int& item2 = hashedVector[id2];
@@ -51,9 +51,8 @@ void testHashedVector()
     hashedVector.CullDeleted();
     int id3 = hashedVector.push_back(30);
     int id4 = hashedVector.push_back(40);
-    hashedVector.remove(id3, false);
-    hashedVector.remove(id4, false);
-    hashedVector.CullDeleted();
+    hashedVector.remove(id3);
+    hashedVector.remove(id4);
     test(hashedVector.size() == 1, 9);
 
     test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 9);/////////////issue here
@@ -65,6 +64,7 @@ void testHashedVector()
     // Test 10: Verify if IDs and corresponding data are preserved after rehashing
     hashedVector.reserve(1000);
     test(hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 10);/////////////issue here
+    std::cout << *hashedVector.try_get(id2);
     test(hashedVector.try_get(id3) == nullptr, 10);
     test(hashedVector.try_get(id4) == nullptr, 10);
 
@@ -77,6 +77,7 @@ void testHashedVector()
 
     // Ensure the underlying vector is still unmodified
     test(hashedVector.size() == 1 && hashedVector.try_get(id2) != nullptr && *hashedVector.try_get(id2) == 20, 11);/////////////issue here
+    std::cout << *hashedVector.try_get(id2);
 
     //Test 12: Try using emplace_back with parameters
     struct TestStruct

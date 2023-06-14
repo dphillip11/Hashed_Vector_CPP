@@ -2,37 +2,54 @@
 #define HASHEDVECTOR_HPP
 
 #include <stdexcept>
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include <algorithm>
 
 template <typename T>
-class HashedVector {
-private:
+ class HashedVector{
 	struct _HashObject {
 		bool deleted = false;
+		int next_key = -1;
+		int prev_key = -1;
+		int last_key = -1;
 		int vector_index = -1;
 	};
 
-	std::unordered_map<int, _HashObject> hashMap;
+	std::map<int, _HashObject> hashMap;
 	std::vector<T> tVector;
+
 	int next_ID = 0;
-	bool cullNeeded = false;
+	int first_key = -1;
+	int last_key = -1;
 
 	void Rehash()
 	{
-		if (cullNeeded)
-			CullDeleted();
+		int list_iterator = first_key;
 		int index = 0;
-		for (auto it = hashMap.begin(); it != hashMap.end(); ++it)
+		while(list_iterator != -1)
 		{
-			if (it->second.deleted)
+			if(!hashMap[list_iterator].deleted)
 			{
-				continue;
+				hashMap[list_iterator].vector_index = index;
+				index++;
 			}
-			it->second.vector_index = index;
-			index++;
+			list_iterator = hashMap[list_iterator].next_key;
 		}
+	}
+
+	void internal_remove_hash_object(int ID)
+	{
+		auto& hashObject = hashMap[ID];
+		if(hashObject.next_key != -1)
+			hashMap[hashObject.next_key].prev_key = hashObject.prev_key;
+		if(hashObject.prev_key != -1)
+			hashMap[hashObject.prev_key].next_key = hashObject.next_key;
+		if(ID == first_key)
+			first_key = hashObject.next_key;
+		if(ID == last_key)
+			last_key = hashObject.prev_key;
+		hashMap.erase(ID);
 	}
 
 public:
@@ -42,9 +59,15 @@ public:
 	{
 		int capacity_before = tVector.capacity();
 		int ID = next_ID;
-		next_ID++;
+		++next_ID;
 		tVector.emplace_back(std::forward<Args>(args)...);
 		hashMap[ID].vector_index = tVector.size() - 1;
+		hashMap[ID].prev_key = last_key;
+		if (last_key != -1)
+			hashMap[last_key].next_key = ID;
+		last_key = ID;
+		if (first_key == -1)
+			first_key = ID;
 		if (tVector.capacity() != capacity_before)
 			Rehash();
 		return ID;
@@ -54,99 +77,120 @@ public:
 	{
 		int capacity_before = tVector.capacity();
 		int ID = next_ID;
-		next_ID++;
+		++next_ID;
 		tVector.push_back(t);
 		hashMap[ID].vector_index = tVector.size() - 1;
+		hashMap[ID].prev_key = last_key;
+		if (last_key != -1)
+			hashMap[last_key].next_key = ID;
+		last_key = ID;
+		if (first_key == -1)
+			first_key = ID;
 		if (tVector.capacity() != capacity_before)
 			Rehash();
 		return ID;
 	}
 
-	void remove(const int& id, const bool& cullVector = true)
+	void remove(const int& id)
 	{
 		auto it = hashMap.find(id);
 		if (it != hashMap.end())
 		{
 			it->second.deleted = true;
-			cullNeeded = true;
-			if (cullVector)
-				CullDeleted();
+			CullDeleted();
 		}
 	}
 
-	void CullDeleted()
+// 	void CullDeleted()
+// 	{
+
+// 		int list_iterator = first_key;
+// 		auto traverseList = [&]()
+// 			{
+// 				auto next_iterator = hashMap[list_iterator].next_key;
+// 				auto index = hashMap[list_iterator].vector_index;
+// 				if(hashMap[list_iterator].deleted)
+// 				{
+// 					tVector.erase(tVector.begin() + index);
+// 					internal_remove_hash_object(list_iterator);
+// 				}
+// 				list_iterator = next_iterator;
+// 			};
+// 		while(list_iterator != -1 && hashMap[list_iterator].deleted)
+// 		{
+// 			traverseList();
+// 		}
+// 		if (list_iterator == -1)
+// 		{
+// 			clear();
+// 			return;
+// 		}
+// 		first_key = list_iterator;
+// 		//indexing here is bring the entry back to life!!!!!!!!!!!!!
+// 		while(list_iterator != -1)
+// 		{
+// 			traverseList();
+// 			last_key = list_iterator;
+// 		}
+	
+// 		if(hashMap[list_iterator].deleted)
+// 				{
+// 			tVector.erase(tVector.begin() + list_iterator);
+// 					internal_remove_hash_object(list_iterator);
+// 				}
+// 		Rehash();
+// }
+
+T& operator[](const int& id)
+{
+	auto it = hashMap.find(id);
+	if (it != hashMap.end())
 	{
-		if (!cullNeeded)
-			return;
-
-		int elementsRemoved = 0;
-		for (auto it = hashMap.begin(); it != hashMap.end();)
-		{
-			if (it->second.deleted)
-			{
-				tVector.erase(tVector.begin() + (it->second.vector_index - elementsRemoved));
-				it = hashMap.erase(it);
-				++elementsRemoved;
-			}
-			else
-			{
-				++it;
-			}
-		}
-		cullNeeded = false;
-		Rehash();
+		if (!it->second.deleted)
+			return tVector[it->second.vector_index];
 	}
+	throw std::out_of_range("Invalid index assertion error: Index out of range.");
+}
 
-
-	T& operator[](const int& id)
+T* try_get(const int& id)
+{
+	auto it = hashMap.find(id);
+	if (it != hashMap.end())
 	{
-		auto it = hashMap.find(id);
-		if (it != hashMap.end())
-		{
-			if (!it->second.deleted)
-				return tVector[it->second.vector_index];
-		}
-		throw std::out_of_range("Invalid index assertion error: Index out of range.");
+		if (!it->second.deleted)
+			return &(tVector[it->second.vector_index]);
 	}
+	return nullptr;
+}
 
-	T* try_get(const int& id)
-	{
-		auto it = hashMap.find(id);
-		if (it != hashMap.end())
-		{
-			if (!it->second.deleted)
-				return &(tVector[it->second.vector_index]);
-		}
-		return nullptr;
-	}
+auto size() const noexcept
+{
+	return tVector.size();
+}
 
-	auto size() const noexcept
-	{
-		return tVector.size();
-	}
+bool empty() const noexcept
+{
+	return tVector.empty();
+}
 
-	bool empty() const noexcept
-	{
-		return tVector.empty();
-	}
+void clear() noexcept
+{
+	tVector.clear();
+	hashMap.clear();
+	first_key = -1;
+	last_key = -1;
+}
 
-	void clear() noexcept
-	{
-		tVector.clear();
-		hashMap.clear();
-		next_ID = 0;
-	}
+void reserve(const int& size)
+{
+	tVector.reserve(size);
+	Rehash();
+}
 
-	void reserve(const int& size)
-	{
-		tVector.reserve(size);
-		Rehash();
-	}
-
-	const std::vector<T>& getVector() const
-	{
-		return tVector;
-	}
+const std::vector<T>& getVector() const
+{
+	return tVector;
+}
 };
 
 #endif // HASHEDVECTOR_HPP
