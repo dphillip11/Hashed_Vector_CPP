@@ -19,7 +19,7 @@ HashedVector<float> hv;
 
 hv.reserve(100);
 
-int ID = hv.push_back(3.0);
+int ID = hv.emplace_back(3.0);
 
 hv[ID] = 5;
 
