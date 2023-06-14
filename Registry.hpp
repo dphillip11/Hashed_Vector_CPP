@@ -39,7 +39,7 @@
         }
 
         //-1 will correspond to components not registered with an entity
-        void AddComponent(DataType& component, int entity)
+        void RegisterComponentToEntity(DataType& component, int entity)
         {
             int id = m_hashedVector.emplace_back(component);
             registeredObjectsByEntity[entity].push_back(id);
@@ -49,13 +49,14 @@
         {
             return registeredObjectsByEntity.find(entity) != registeredObjectsByEntity.end();
         }
+    
     };
 
     class Registry
     {
     private:
         static std::unordered_map<std::type_index, std::string> m_typeNames;
- public:
+ 
         template <typename DataType>
         RegistryContainer<DataType> &GetContainer()
         {
@@ -64,8 +65,12 @@
             static RegistryContainer<DataType> container;
             return container;
         }
-
-   
+    public:
+        template <typename DataType>
+        bool entityHasComponent(int entityID)
+        {
+            return GetContainer<DataType>().validEntity(entityID);
+        }
         // get user-friendly type name
         template <typename DataType>
         std::string GetTypeName()
@@ -96,7 +101,7 @@
         void RegisterComponent(DataType& component, int entity = -1)
         {
             auto& container = GetContainer<DataType>();
-            container.AddComponent(component, entity);
+            container.RegisterComponentToEntity(component, entity);
         }
 
     };
