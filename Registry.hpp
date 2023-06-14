@@ -3,8 +3,7 @@
 #include "HashedVector.hpp"
 #include <typeindex>
 
-namespace Registry
-{
+
 
     template <typename DataType>
     class RegistryContainer
@@ -18,7 +17,7 @@ namespace Registry
             std::vector<int> removedObjects;
             std::vector<DataType*> componentVector;
             //check for entity in map
-            if(validEntity(entity))
+            if(!validEntity(entity))
             {
                 //if not found, return empty vector
                 return componentVector;
@@ -34,16 +33,18 @@ namespace Registry
                     }
             }
              registeredObjectsByEntity[entity].erase(std::remove_if(registeredObjectsByEntity[entity].begin(), registeredObjectsByEntity[entity].end(), [&](int element) {
-        return std::find(removedObjects.begin(), removedObjects.end(), element) != removedObjects.end();
-    }),  registeredObjectsByEntity[entity].end());
+                        return std::find(removedObjects.begin(), removedObjects.end(), element) != removedObjects.end();
+                        }),  registeredObjectsByEntity[entity].end());
             return componentVector;
         }
+
         //-1 will correspond to components not registered with an entity
         void AddComponent(DataType& component, int entity)
         {
             int id = m_hashedVector.emplace_back(component);
             registeredObjectsByEntity[entity].push_back(id);
         }
+
         bool validEntity(int entity)
         {
             return registeredObjectsByEntity.find(entity) != registeredObjectsByEntity.end();
@@ -54,7 +55,7 @@ namespace Registry
     {
     private:
         static std::unordered_map<std::type_index, std::string> m_typeNames;
-
+ public:
         template <typename DataType>
         RegistryContainer<DataType> &GetContainer()
         {
@@ -64,7 +65,7 @@ namespace Registry
             return container;
         }
 
-    public:
+   
         // get user-friendly type name
         template <typename DataType>
         std::string GetTypeName()
@@ -87,7 +88,8 @@ namespace Registry
         template <typename DataType>
         std::vector<DataType*> GetComponentsByEntity(int entity)
         {
-            return GetContainer<DataType>().GetComponentsByEntity(entity);
+            auto &container = GetContainer<DataType>();
+            return container.GetComponentsByEntity(entity);
         }
     
         template <typename DataType>
@@ -98,6 +100,6 @@ namespace Registry
         }
 
     };
-}; // namespace Registry
+
 
 #endif // !REGISTRY_HPP
