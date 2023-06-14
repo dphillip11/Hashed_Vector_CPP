@@ -73,26 +73,31 @@ void testHashedVector()
         }
     }
     test(success); //test19
-    //remove elements
+    //remove non sequential elements
     for (int i = 0; i < 1000; i++)
     {
         int index = i *  5;
         hv3.remove(index);
     }
-    std::cout << "Size: " << hv3.size() << std::endl;
-    for(int i = 0; i < 10000; i++)
+    test(hv3.size() == 9000); //test20
+    //check hash map size
+    test(hv3.getHashMap().size() == 9000);//test21
+    // check accuracy of hash map
+    for (int i = 0; i < 10000; i++)
     {
-        //check random access
-        int index = rand() % 10000;
-        if(hv3[index] != index)
+        if (!hv3.is_valid_key(i))
         {
-            std::cout<< "Index: " << index << std::endl;
-            std::cout << "Value: " << hv3[index] << std::endl;
+            continue;
+        }
+        if (hv3[i] != i)
+        {
             success = false;
+            std::cout << "diff: " << i - hv3[i] << std::endl;
             break;
         }
-    }
-    test(success); //test20
+        }
+    test(success); //test22
+    std::cout<<"end of hashed vector tests"<<std::endl;
 }
 
 #include "Registry.hpp"
