@@ -16,9 +16,13 @@ For my use case I will probably allow entities to store ID's for attached compon
 #include "HashedVector.hpp"
 
 HashedVector<float> hv;
-  
+
+hv.reserve(100);
+
 int ID = hv.push_back(3.0);
-  
+
+hv[ID] = 5;
+
 hv.remove(ID);
   
 const auto& vector = hv.getVector();
