@@ -1,4 +1,3 @@
-## this branch will attempt to replace a sparse unordered map with a linked list component
 # Hashed_Vector_CPP
 
 As I have been working on a component based game engine I realised I would both like to query a data structure based on ID and maintain contiguousness.
