@@ -1,3 +1,5 @@
+#ifndef HASHEDVECTOR_HPP
+#define HASHEDVECTOR_HPP
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
@@ -121,3 +123,4 @@ public:
 	}
 };
 
+#endif // !HASHEDVECTOR_HPP

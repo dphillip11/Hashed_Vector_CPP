@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <vector>
 #include "HashedVector.hpp"
+#include <string>
+#include "Registry.hpp"
 
 // Test function to check if the given condition is true
 void test(bool condition)
@@ -100,11 +102,34 @@ void testHashedVector()
     std::cout<<"end of hashed vector tests"<<std::endl;
 }
 
-#include "Registry.hpp"
+
+
+void test_registry()
+{
+    Registry::Registry registry;
+
+    int Entity57 = 57;
+    char name1 = 'f';
+    float health1 = 57.0f;
+    int Entity99 = 99;
+    char name2 = 'n';
+    float health2 = 99.0f;
+
+    registry.RegisterComponent(name1, Entity57);
+    registry.RegisterComponent(health1, Entity57);
+    registry.RegisterComponent(name2, Entity99);
+    registry.RegisterComponent(health2, Entity99);
+    registry.SetTypeName<char>("name");
+    registry.SetTypeName<float>("health");
+
+    auto retrieved_name = registry.GetComponentsByEntity<std::string>(Entity57);
+    std::cout << &retrieved_name[0] << std::endl;
+}
 
 int main()
 {
-    testHashedVector();
+   //testHashedVector();
+    test_registry();
     return 0;
 }
 
