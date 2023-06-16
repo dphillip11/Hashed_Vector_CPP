@@ -56,11 +56,10 @@ void test_registry()
     test(entity1.GetComponents<Character>().size() == 1); //test9
     test(entity1.GetComponents<FloatingPoint>().size() == 1); //test10
 
-    // //check retrieval of components by type
-    // auto& p_pos_vector = registry.GetComponentsByType<Particle_position>();
-    // test(p_pos_vector.size() == 1); //test11
-    // test(p_pos_vector[0].x == 2.5f); //test12
-    // auto& float_vector = registry.GetComponentsByType<float>();
-    // test(float_vector.size() == 2); //test13
+    //check retrieval of components by type
+    auto& CharVector = registry.GetComponentsByType<Character>();
+    test(CharVector.size() == 1); //test11
+    auto& floatVector = registry.GetComponentsByType<float>();
+    test(floatVector.size() == 2); //test12
 
 }

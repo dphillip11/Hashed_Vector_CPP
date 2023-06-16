@@ -67,7 +67,7 @@ private:
         template <typename DataType>
         std::vector<DataType>& GetComponentsByType()
         {
-            return GetContainer<DataType>().m_hashedVector.getVector();
+            return GetContainer<DataType>().getVector();
         }
 
         //empties the component container of the given type
