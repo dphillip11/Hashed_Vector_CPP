@@ -7,6 +7,7 @@
 //declare static members
 std::unordered_map<std::type_index, std::string> Registry::m_typeNames;
 
+
 void test_registry()
 {
     Registry registry;
@@ -91,5 +92,18 @@ void test_registry()
 
     test(entity1.GetComponents<int>().empty()); //test19
 
+    // Test typenames are kept after clear
+    test(registry.GetTypeName<char>() == "name"); //test20
     
+    //test keeping references of entities
+    EntityID new_entity;
+    if (true)
+    {
+        Entity temp_entity(registry);
+        temp_entity.AddComponent(name1);
+        temp_entity.AddComponent(health1);
+        new_entity = temp_entity.GetReference();
+    }
+    test(new_entity.Get()->GetComponents<char>()[0] == 'f'); //test21
+    test(new_entity.Get()->GetComponents<float>()[0] == 57.0f); //test22
 }

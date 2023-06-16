@@ -13,8 +13,23 @@ public:
     virtual void reserve(const int &size) = 0;
 };
 
+class Registry;
+class Entity;
+
+class EntityID
+{
+public:
+    Entity* Get();
+    EntityID(int id, Registry* registry): m_id(id), m_registry(registry) {}
+    EntityID() = default;
+private:
+    friend class Registry;
+    friend class Entity;
+    int m_id = -1;
+    Registry* m_registry = nullptr;
+};
 template <typename DataType>
-class RegistryContainer: public BaseRegistryContainer, public hashedVector<DataType>
+class RegistryContainer : public BaseRegistryContainer, public hashedVector<DataType>
 {
 public:
     RegistryContainer() = default;
@@ -37,6 +52,8 @@ public:
     }
 };
 
+class Entity;
+
 class Registry
 {
     friend class Entity;
@@ -44,6 +61,7 @@ class Registry
 private:
     static std::unordered_map<std::type_index, std::string> m_typeNames;
     std::unordered_map<std::type_index, std::unique_ptr<BaseRegistryContainer>> componentContainers;
+    hashedVector<Entity> m_entities;
 
     template <typename DataType>
     RegistryContainer<DataType> &GetContainer()
@@ -56,6 +74,16 @@ private:
     }
 
 public:
+
+    Entity& GetEntity(int id)
+    {
+        if (!m_entities.is_valid_key(id))
+        {
+            throw std::runtime_error("Invalid Entity ID");
+        }
+        return m_entities[id];
+    }
+
     template <typename DataType>
     DataType& GetComponentByComponentID(int componentID)
     {
@@ -106,7 +134,6 @@ public:
     };
 };
 
-
 class Entity
 {
 private:
@@ -116,6 +143,13 @@ private:
 public:
     Entity(Registry& registry) : m_registry(registry) {}
 
+    //use a reference to add entity to registry and avoid pointer invalidation
+    EntityID GetReference()
+    {
+        EntityID id{m_registry.m_entities.push_back(*this), &m_registry};
+        return id;
+    }
+    
     template <typename DataType>
     bool hasComponent()
     {
@@ -193,4 +227,8 @@ public:
     }
 };
 
+Entity* EntityID::Get()
+{   
+    return &(m_registry->GetEntity(m_id));
+}
 #endif // !REGISTRY_HPP
