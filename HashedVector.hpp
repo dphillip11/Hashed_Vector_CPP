@@ -99,7 +99,7 @@ public:
 	}
 
 	//check key value pair exists
-	bool is_valid_key(const int& key)
+	bool is_valid_key(const int& key) const
 	{
 		return hash_map.find(key) != hash_map.end();
 	}

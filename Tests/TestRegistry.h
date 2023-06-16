@@ -62,4 +62,34 @@ void test_registry()
     auto& floatVector = registry.GetComponentsByType<float>();
     test(floatVector.size() == 2); //test12
 
+     // Test emplace component
+    entity1.EmplaceComponent<int>(10);
+    test(entity1.GetComponents<int>()[0] == 10); //test13
+
+    // Test hasComponent
+    test(entity1.hasComponent<int>()); //test14
+    test(!entity1.hasComponent<double>()); //test15
+
+    // Test remove components
+    entity1.RemoveComponents<int>();
+    test(!entity1.hasComponent<int>()); //test16
+
+    // Test destroy components
+    registry.DestroyComponents<float>();
+    test(registry.GetComponentsByType<float>().empty()); //test17
+
+    // Test clear registry
+    entity1.EmplaceComponent<int>(10);
+    entity1.EmplaceComponent<int>(20);
+    entity1.EmplaceComponent<int>(30);
+    entity1.EmplaceComponent<int>(40);
+    entity1.EmplaceComponent<int>(50);
+
+    test(entity1.GetComponents<int>().size() == 5); //test18
+
+    registry.ClearRegistry();
+
+    test(entity1.GetComponents<int>().empty()); //test19
+
+    
 }
