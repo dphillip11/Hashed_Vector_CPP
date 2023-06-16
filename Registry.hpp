@@ -2,75 +2,40 @@
 #define REGISTRY_HPP
 #include "HashedVector.hpp"
 #include <typeindex>
+#include <memory>
 
+template <typename DataType>
+using RegistryContainer = hashedVector<DataType>;
 
+//placeholder class for components
+struct Component
+{
+};
+
+class Registry
+{
+    friend class Entity;
+
+private:
+    static std::unordered_map<std::type_index, std::string> m_typeNames;
+    std::unordered_map<std::type_index, std::unique_ptr<RegistryContainer<Component>>> componentContainers;
 
     template <typename DataType>
-    class RegistryContainer
+    RegistryContainer<DataType> &GetContainer()
     {
-    private:
-        friend class Registry;
-        hashedVector<DataType> m_hashedVector;
-        std::unordered_map<int, std::vector<int>> registeredObjectsByEntity;
-        std::vector<DataType*> GetComponentsByEntity(int entity)
-        {
-            std::vector<int> removedObjects;
-            std::vector<DataType*> componentVector;
-            //check for entity in map
-            if(!validEntity(entity))
-            {
-                //if not found, return empty vector
-                return componentVector;
-            }           
-            //return vector of component references
-            for (auto& object: registeredObjectsByEntity[entity])
-            {
-                if (m_hashedVector.try_get(object))
-                    componentVector.push_back(&m_hashedVector[object]);
-                    else
-                    {
-                        removedObjects.push_back(object);
-                    }
-            }
-             registeredObjectsByEntity[entity].erase(std::remove_if(registeredObjectsByEntity[entity].begin(), registeredObjectsByEntity[entity].end(), [&](int element) {
-                        return std::find(removedObjects.begin(), removedObjects.end(), element) != removedObjects.end();
-                        }),  registeredObjectsByEntity[entity].end());
-            return componentVector;
+        std::type_index typeIndex = std::type_index(typeid(DataType));
+        if (componentContainers.count(typeIndex) == 0) {
+            componentContainers[typeIndex] = std::make_unique<RegistryContainer<DataType>>();
         }
+        return static_cast<RegistryContainer<DataType>&>(*componentContainers[typeIndex]);
+    }
 
-        //-1 will correspond to components not registered with an entity
-        void RegisterComponentToEntity(DataType& component, int entity)
-        {
-            int id = m_hashedVector.emplace_back(component);
-            registeredObjectsByEntity[entity].push_back(id);
-        }
-
-        bool validEntity(int entity)
-        {
-            return registeredObjectsByEntity.find(entity) != registeredObjectsByEntity.end();
-        }
-    
-    };
-
-    class Registry
-    {
-    private:
-        static std::unordered_map<std::type_index, std::string> m_typeNames;
- 
         template <typename DataType>
-        RegistryContainer<DataType> &GetContainer()
+        DataType& GetComponentByComponentID(int componentID)
         {
-            //ensures an entry is added to the map, should be useful for file I/O
-            m_typeNames[std::type_index(typeid(DataType))];
-            static RegistryContainer<DataType> container;
-            return container;
+            return GetContainer<DataType>()[componentID];
         }
     public:
-        template <typename DataType>
-        bool entityHasComponent(int entityID)
-        {
-            return GetContainer<DataType>().validEntity(entityID);
-        }
         // get user-friendly type name
         template <typename DataType>
         std::string GetTypeName()
@@ -90,21 +55,112 @@
             m_typeNames[std::type_index(typeid(DataType))] = typeName;
         }
 
+        //returns a componentID
         template <typename DataType>
-        std::vector<DataType*> GetComponentsByEntity(int entity)
-        {
-            auto &container = GetContainer<DataType>();
-            return container.GetComponentsByEntity(entity);
-        }
-    
-        template <typename DataType>
-        void RegisterComponent(DataType& component, int entity = -1)
+        void RegisterComponent(DataType& component)
         {
             auto& container = GetContainer<DataType>();
-            container.RegisterComponentToEntity(component, entity);
+            container.push_back(component);
         }
 
+        //returns all components of the given type
+        template <typename DataType>
+        std::vector<DataType>& GetComponentsByType()
+        {
+            return GetContainer<DataType>().m_hashedVector.getVector();
+        }
+
+        //empties the component container of the given type
+        template <typename DataType>
+        void DestroyComponents()
+        {
+            GetContainer<DataType>().clear();
+        }
+        
+        void ClearRegistry(){
+            for (auto& container : componentContainers)
+            {
+                container.second->clear();
+            }    
+        };
+};
+
+class Entity
+{
+private:
+    Registry& m_registry;
+    std::unordered_map<std::type_index, std::vector<int>> m_registeredComponents;
+
+public:
+    //constructor requires registry reference
+    Entity(Registry& registry) : m_registry(registry) {}
+    //check if entity has component
+    template <typename DataType>
+    bool hasComponent()
+    {
+        return m_registeredComponents.find(std::type_index(typeid(DataType))) != m_registeredComponents.end();
+    }
+    //removes all components from entity
+    void DestroyComponents()
+    {
+        for (const auto& components : m_registeredComponents)
+        {
+            for (const auto& id : components.second)
+            {
+                if(!m_registry.componentContainers[components.first]->is_valid_key(id))
+                    continue;
+                m_registry.componentContainers[components.first]->remove(id);
+            }
+        }
+        m_registeredComponents.clear();
+    }
+    //removes components of a given type from entity
+    template <typename DataType>
+    void RemoveComponents()
+    {
+        if (!hasComponent<DataType>())
+            return;
+        for (const auto& id : m_registeredComponents[std::type_index(typeid(DataType))])
+        {
+            auto& container = m_registry.GetContainer<DataType>();
+            if(!container.is_valid_key(id))
+                container.remove(id);
+        }
+        m_registeredComponents.erase(std::type_index(typeid(DataType)));
+    }
+    //Add component to entity
+    template <typename DataType>
+    void AddComponent(DataType& component)
+    {
+        int id = m_registry.RegisterComponent(component);
+        m_registeredComponents[std::type_index(typeid(DataType))].push_back(id);
     };
+    // returns references to all components of type DataType
+    template <typename DataType>
+    std::vector<std::reference_wrapper<DataType>> GetComponents()
+     {      
+            //returns empty vector if entity does not have component
+            if (!hasComponent<DataType>())
+                return std::vector<std::reference_wrapper<DataType>>();
+            auto& componentIDs = m_registeredComponents[std::type_index(typeid(DataType))];
+            std::vector<std::reference_wrapper<DataType>> components;
+            hashedVector<DataType>& componentHashedVector = m_registry.GetContainer<DataType>().m_hashedVector;
+            std::vector<int> removedComponents;
+            for (auto &id : componentIDs)
+            {
+                if (componentHashedVector.tryGet(id))
+                    components.push_back(componentHashedVector[id]);
+                else
+                    removedComponents.push_back(id);
+            }
+            for (auto &id : removedComponents)
+            {
+                componentIDs.erase(std::remove(componentIDs.begin(), componentIDs.end(), id), componentIDs.end());
+            }
+            return components; 
+     }
+};
+
 
 
 #endif // !REGISTRY_HPP
