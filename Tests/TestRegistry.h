@@ -14,11 +14,13 @@ void test_registry()
     EntityRegistry entities;
 
     EntityRef entity1ref = entities.CreateEntity(components);
-    #define entity1  entity1ref.get()
+    EntityRef entity2ref = entities.CreateEntity(components);
+    //this option can lead to pointer invalidation so should only be used while the underlying vector does not change
+    Entity &entity1 = entity1ref.get();
+    //this option is safer but slower
+    #define entity2  entity2ref.get()
     char name1 = 'f';
     float health1 = 57.0f;
-    EntityRef entity2ref = entities.CreateEntity(components);
-    #define entity2  entity2ref.get()
     char name2 = 'n';
     float health2 = 99.0f;
 

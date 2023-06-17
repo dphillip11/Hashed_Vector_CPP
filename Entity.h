@@ -142,16 +142,17 @@ class EntityRef{
 };
 
 EntityRef EntityRegistry::CreateEntity(ComponentRegistry & component_registry){
-        EntityRef ref;
-        Entity tempEntity;
-        int id = hashedVector<Entity>::push_back(tempEntity);
-        Entity &entity = hashedVector<Entity>::operator[](id);
-        entity.m_entity_registry = this;
-        entity.m_component_registry = &component_registry;
-        entity.m_id = id;
-        ref.m_entityID = id;
-        ref.m_entity_registry = this;
-        return ref;
+    Entity tempEntity;
+    tempEntity.m_entity_registry = this;
+    tempEntity.m_component_registry = &component_registry;
+    int id = hashedVector<Entity>::push_back(tempEntity);
+    Entity &entity = hashedVector<Entity>::operator[](id);
+    entity.m_id = id;
+
+    EntityRef ref;
+    ref.m_entityID = id;
+    ref.m_entity_registry = this;
+    return ref;
 }
 
 #endif // ENTITY_H
