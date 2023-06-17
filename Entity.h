@@ -129,6 +129,8 @@ friend class EntityRegistry;
 class EntityRef{
     public:
         Entity& get(){
+            if (m_entityID == -1)
+                throw std::runtime_error("Entity ID is -1");
             if (m_entity_registry == nullptr)
                 throw std::runtime_error("Entity registry reference is null");
             if (!m_entity_registry->is_valid_key(m_entityID))

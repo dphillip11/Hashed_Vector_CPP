@@ -4,6 +4,6 @@
 int main()
 {
     test_registry();
-    //testHashedVector();
+    testHashedVector();
     return 0;
 }
