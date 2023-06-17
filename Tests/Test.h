@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 
 // Test function to check if the given condition is true

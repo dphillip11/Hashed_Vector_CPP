@@ -2,20 +2,23 @@
 #include <cassert>
 #include <stdexcept>
 #include <vector>
-#include "../Registry.hpp"
+#include "Test.h"
+#include "../Entity.h"
 
 //declare static members
-std::unordered_map<std::type_index, std::string> Registry::m_typeNames;
-
+std::unordered_map<std::type_index, std::string> ComponentRegistry::m_typeNames;
 
 void test_registry()
 {
-    Registry registry;
-    
-    Entity entity1(registry);
+    ComponentRegistry components;
+    EntityRegistry entities;
+
+    EntityRef entity1ref = entities.CreateEntity(components);
+    #define entity1  entity1ref.get()
     char name1 = 'f';
     float health1 = 57.0f;
-    Entity entity2(registry);
+    EntityRef entity2ref = entities.CreateEntity(components);
+    #define entity2  entity2ref.get()
     char name2 = 'n';
     float health2 = 99.0f;
 
@@ -31,10 +34,10 @@ void test_registry()
     test(entity2.GetComponents<float>()[0] == 99.0f); //test4
 
     //check storage of user friendly type names
-    registry.SetTypeName<char>("name");
-    registry.SetTypeName<float>("health");
-    test(registry.GetTypeName<char>() == "name"); //test5
-    test(registry.GetTypeName<float>() == "health"); //test6
+    components.SetTypeName<char>("name");
+    components.SetTypeName<float>("health");
+    test(components.GetTypeName<char>() == "name"); //test5
+    test(components.GetTypeName<float>() == "health"); //test6
 
     //test custom components are differentiated by type
     struct Character
@@ -58,9 +61,9 @@ void test_registry()
     test(entity1.GetComponents<FloatingPoint>().size() == 1); //test10
 
     //check retrieval of components by type
-    auto& CharVector = registry.GetComponentsByType<Character>();
+    auto& CharVector = components.GetComponentsByType<Character>();
     test(CharVector.size() == 1); //test11
-    auto& floatVector = registry.GetComponentsByType<float>();
+    auto& floatVector = components.GetComponentsByType<float>();
     test(floatVector.size() == 2); //test12
 
      // Test emplace component
@@ -76,10 +79,10 @@ void test_registry()
     test(!entity1.hasComponent<int>()); //test16
 
     // Test destroy components
-    registry.DestroyComponents<float>();
-    test(registry.GetComponentsByType<float>().empty()); //test17
+    components.DestroyComponents<float>();
+    test(components.GetComponentsByType<float>().empty()); //test17
 
-    // Test clear registry
+    // Test clear components
     entity1.EmplaceComponent<int>(10);
     entity1.EmplaceComponent<int>(20);
     entity1.EmplaceComponent<int>(30);
@@ -88,22 +91,23 @@ void test_registry()
 
     test(entity1.GetComponents<int>().size() == 5); //test18
 
-    registry.ClearRegistry();
+    components.ClearRegistry();
 
     test(entity1.GetComponents<int>().empty()); //test19
 
     // Test typenames are kept after clear
-    test(registry.GetTypeName<char>() == "name"); //test20
+    test(components.GetTypeName<char>() == "name"); //test20
     
-    //test keeping references of entities
-    EntityID new_entity;
+    //test entities are kept after reference deleted
     if (true)
     {
-        Entity temp_entity(registry);
+        EntityRef temp_entity_ref = entities.CreateEntity(components);
+        Entity& temp_entity = temp_entity_ref.get();
         temp_entity.AddComponent(name1);
         temp_entity.AddComponent(health1);
-        new_entity = temp_entity.GetReference();
     }
-    test(new_entity.Get()->GetComponents<char>()[0] == 'f'); //test21
-    test(new_entity.Get()->GetComponents<float>()[0] == 57.0f); //test22
+    auto& entitiesVector = entities.getVector();
+    auto& stored_entity = entitiesVector.back();
+    test(entitiesVector.back().GetComponents<char>()[0] == 'f');    // test21
+    test(stored_entity.GetComponents<float>()[0] == 57.0f); //test22
 }
