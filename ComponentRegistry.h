@@ -14,26 +14,26 @@ public:
 };
 
 template <typename DataType>
-class RegistryContainer : public BaseRegistryContainer, public hashedVector<DataType>
+class RegistryContainer : public BaseRegistryContainer, public HashedVector<DataType>
 {
 public:
     RegistryContainer() = default;
     ~RegistryContainer() = default;
     void clear() override
     {
-        hashedVector<DataType>::clear();
+        HashedVector<DataType>::clear();
     }
     bool is_valid_key(int id) const override
     {
-        return hashedVector<DataType>::is_valid_key(id);
+        return HashedVector<DataType>::is_valid_key(id);
     }
     void remove(int id) override
     {
-        hashedVector<DataType>::remove(id);
+        HashedVector<DataType>::remove(id);
     }
     void reserve(const int &size) override
     {
-        hashedVector<DataType>::reserve(size);
+        HashedVector<DataType>::reserve(size);
     }
 };
 

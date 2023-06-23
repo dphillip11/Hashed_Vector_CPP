@@ -6,7 +6,7 @@
 #include <algorithm>
 
 template <typename dataType>
-class hashedVector{
+class HashedVector{
 private:
 	bool areElementsEqual(const dataType& lhs, const dataType& rhs)
 	{

@@ -8,7 +8,7 @@
 // Test function to check the functionality of HashedVector
 void testHashedVector()
 {
-    hashedVector<char> hv;
+    HashedVector<char> hv;
     //test adding elements
     test(hv.push_back('A') == 0); // test 1
     test(hv.push_back('B') == 1); //test2
@@ -35,7 +35,7 @@ void testHashedVector()
         float b;
         testStruct(int a, float b) : a(a), b(b) {}
     };
-    hashedVector<testStruct> hv2;
+    HashedVector<testStruct> hv2;
     auto id2 = hv2.emplace_back(1, 2.0f);
     test(hv2[id2].a == 1); //test13
     test(hv2[id2].b == 2.0f); //test14
@@ -49,7 +49,7 @@ void testHashedVector()
     test(hv2.emplace_back(0, 1.0f) == 2); //test18
 
     //test lookup accuracy over a large number of element
-    hashedVector<int> hv3;
+    HashedVector<int> hv3;
     for(int i = 0; i < 10000; i++)
     {
         hv3.emplace_back(i);
@@ -91,7 +91,7 @@ void testHashedVector()
         }
     test(success); //test22
     //check valid lookup by value
-    hashedVector<int> hv4;
+    HashedVector<int> hv4;
     hv4.emplace_back(1);
     hv4.emplace_back(2);
     int id3 = hv4.emplace_back(3);
