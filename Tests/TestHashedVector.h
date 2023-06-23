@@ -90,5 +90,16 @@ void testHashedVector()
         }
         }
     test(success); //test22
-    std::cout<<"end of hashed vector tests"<<std::endl;
+    //check valid lookup by value
+    hashedVector<int> hv4;
+    hv4.emplace_back(1);
+    hv4.emplace_back(2);
+    int id3 = hv4.emplace_back(3);
+    hv4.emplace_back(4);
+    hv4.emplace_back(5);
+    int three = 3;
+    test(hv4.get_id(three) == id3); //test23
+    //test remove by value
+    hv4.remove(three);
+    test(hv4.size() == 4); //test24
 }

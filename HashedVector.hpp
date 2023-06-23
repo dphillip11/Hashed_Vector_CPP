@@ -8,6 +8,10 @@
 template <typename dataType>
 class hashedVector{
 private:
+	bool areElementsEqual(const dataType& lhs, const dataType& rhs)
+	{
+		return std::equal_to<dataType>{}(lhs, rhs);
+	}
 	// this is where user data is stored
 	std::vector<dataType> wrapped_vector;
 	// this maps keys to vector positions
@@ -86,6 +90,26 @@ public:
 	void reserve(const int& size)
 	{
 		wrapped_vector.reserve(size);
+	}
+
+	//TODO:: currently inefficient!
+	int get_id(dataType& data)
+	{
+		for (auto it = wrapped_vector.begin(); it != wrapped_vector.end(); ++it)
+		{
+			if (areElementsEqual(*it, data))
+			{
+				int vector_index = std::distance(wrapped_vector.begin(), it);
+				for (const auto& pair : hash_map)
+				{
+					if (pair.second == vector_index)
+					{
+						return pair.first;
+					}
+				}
+			}
+		}
+		return -1;
 	}
 
 	dataType& operator[](const int& key)
